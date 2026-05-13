@@ -1,76 +1,30 @@
-from fastapi import FastAPI, Depends, Request
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlmodel import Session
 
-from database import engine, crear_db
-from models import Usuario
-from crud import crear_usuario, obtener_usuario
+from database import crear_db
+from usuarios import router
 
 app = FastAPI()
 
-# Templates
 templates = Jinja2Templates(directory="templates")
 
-# Archivos estaticos
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# INCLUIR ROUTER
+app.include_router(router)
 
-# Crear DB al iniciar
+# CREAR BASE DE DATOS
 @app.on_event("startup")
 def on_startup():
     crear_db()
 
-
-# Sesion DB
-def get_session():
-    with Session(engine) as session:
-        yield session
-
-
-# Inicio
+# PAGINA PRINCIPAL
 @app.get("/")
 def inicio(request: Request):
 
-    usuarios = [
-        {"nombre": "Ana"},
-        {"nombre": "Carlos"}
-    ]
-
     return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
-            "usuarios": usuarios
-        }
+        request=request,
+        name="index.html",
+        context={}
     )
-
-
-# Listar usuarios
-@app.get("/usuarios")
-def listar_usuarios():
-    return ["usuario1", "usuario2"]
-
-
-# Saludar usuario
-@app.get("/usuarios/{nombre}")
-def saludar_usuario(nombre: str):
-    return {"mensaje": f"Hola {nombre}"}
-
-
-# Crear usuario
-@app.post("/usuarios")
-def crear(
-    usuario: Usuario,
-    session: Session = Depends(get_session)
-):
-    return crear_usuario(usuario, session)
-
-
-# Obtener usuario por ID
-@app.get("/usuarios/id/{id}")
-def obtener(
-    id: int,
-    session: Session = Depends(get_session)
-):
-    return obtener_usuario(id, session)

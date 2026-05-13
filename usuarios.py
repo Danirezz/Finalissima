@@ -1,16 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session
+from sqlmodel import Session, select
 
-from app.models import Usuario
-from app.database import get_session
+from models import Usuario
+from database import get_session
 
 router = APIRouter()
 
 # LISTAR USUARIOS
 @router.get("/usuarios")
-def listar_usuarios(session: Session = Depends(get_session)):
+def listar_usuarios(
+    session: Session = Depends(get_session)
+):
 
-    usuarios = session.query(Usuario).all()
+    usuarios = session.exec(
+        select(Usuario)
+    ).all()
 
     return usuarios
 
